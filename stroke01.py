@@ -28,6 +28,7 @@ model = joblib.load("best_stroke_model.pkl")
 @app.get("/")
 def home():
     return {"message": "Welcome to the Stroke Risk Prediction API"}
+
 @app.post("/predict", response_class=JSONResponse)
 async def predict(
     request: Request,
@@ -51,7 +52,6 @@ async def predict(
     # Return the prediction result as JSON
     return JSONResponse(content={"prediction": round(prediction, 2)})
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
+    uvicorn.run(app, host="0.0.0.0", port=8000)
