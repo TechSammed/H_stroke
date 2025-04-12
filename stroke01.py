@@ -58,6 +58,7 @@ async def predict(
     
     # Return prediction result back to the HTML page
     return templates.TemplateResponse("index.html", {
-        "request": request,
-        "prediction": f"Predicted Stroke Risk: {round(prediction, 2)}%"
-    })
+    "request": request,
+    "prediction": f"Predicted Stroke Risk: {round(prediction, 2)}%"
+})
+
