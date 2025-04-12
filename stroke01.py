@@ -6,37 +6,29 @@ Created on Fri Apr 11 22:45:05 2025
 """
 
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import numpy as np
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware  # ✅ NEW: Import CORS middleware
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# ✅ Add CORS middleware to allow frontend or external requests
+# --- CORS Middleware Setup ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[""],  # "" means any origin. Use your frontend URL here in production.
+    allow_origins=["*"],  # In production, specify your frontend URL(s)
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-# Load the trained ML model
+
+# --- Load the trained ML model ---
 model = joblib.load("best_stroke_model.pkl")
 
-# Set up Jinja2 template directory for rendering HTML
-templates = Jinja2Templates(directory="templates")
-
-# Home route to load the index page
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-# Prediction route to handle the form input and generate prediction
-@app.post("/predict", response_class=HTMLResponse)
+@app.get("/")
+def home():
+    return {"message": "Welcome to the Stroke Risk Prediction API"}
+@app.post("/predict", response_class=JSONResponse)
 async def predict(
     request: Request,
     feature0: float = Form(...), feature1: float = Form(...),
@@ -48,17 +40,18 @@ async def predict(
     feature12: float = Form(...), feature13: float = Form(...),
     feature14: float = Form(...), feature15: float = Form(...)
 ):
-  # Collect features into an array for prediction
+    # Collect the input features into a list
     input_features = [feature0, feature1, feature2, feature3, feature4, feature5,
                       feature6, feature7, feature8, feature9, feature10, feature11,
                       feature12, feature13, feature14, feature15]
     
-    # Make the prediction
+    # Perform the prediction using the loaded model
     prediction = model.predict(np.array(input_features).reshape(1, -1))[0]
-    
-    # Return prediction result back to the HTML page
-    return templates.TemplateResponse("index.html", {
-    "request": request,
-    "prediction": f"Predicted Stroke Risk: {round(prediction, 2)}%"
-})
+
+    # Return the prediction result as JSON
+    return JSONResponse(content={"prediction": round(prediction, 2)})
+
+if _name_ == "_main_":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
